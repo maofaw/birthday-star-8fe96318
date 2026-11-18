@@ -103,16 +103,17 @@ window.__updateBirthdayLoading = function(){
   if (!status) return;
   var audio=window.__birthdayAudio;
   var preparing=!window.__birthdayMainReady || !window.__cakeSideImage || !window.__cakeSideImage.naturalWidth;
+  var failed=window.__birthdayAudioStarted && audio && audio.error;
   var waiting=window.__birthdayAudioStarted && audio && audio.readyState<3;
-  status.hidden=!(preparing || waiting);
-  status.textContent=preparing ? "生日惊喜准备中…" : "音乐加载中…";
+  status.hidden=!(preparing || waiting || failed);
+  status.textContent=preparing ? "生日惊喜准备中…" : failed ? "音乐加载失败，请点右上角重试" : "音乐加载中…";
 };
 window.__birthdayAudio = null;
 window.__birthdayAudioStarted = false;
-window.__startBirthdayAudio = function(){
+window.__prepareBirthdayAudio = function(){
   var audio = window.__birthdayAudio;
   if (!audio){
-    audio = window.__birthdayAudio = new Audio("assets/birthday.m4a");
+    audio = window.__birthdayAudio = new Audio("assets/birthday-stream.m4a");
     audio.loop = true;
     audio.preload = "auto";
     ["loadstart","waiting","canplay","playing","error"].forEach(function(event){audio.addEventListener(event,window.__updateBirthdayLoading);});
@@ -120,6 +121,12 @@ window.__startBirthdayAudio = function(){
     audio.setAttribute("playsinline", "");
     audio.setAttribute("webkit-playsinline", "");
   }
+  return audio;
+};
+window.__prepareBirthdayAudio();
+window.__startBirthdayAudio = function(){
+  var audio=window.__prepareBirthdayAudio();
+  if (audio.error) audio.load();
   window.__birthdayAudioStarted = true;
   window.__updateBirthdayLoading();
   var playing = audio.play();
@@ -175,7 +182,8 @@ h1{margin-top:12px;font-size:32px;line-height:1.2;font-weight:800;letter-spacing
 .modal.show{display:flex}
 .paper{position:relative;width:100%;max-width:500px;max-height:86vh;max-height:min(86dvh,calc(100dvh - 40px));overflow:auto;overscroll-behavior:contain;padding:8px 10px 12px;border-radius:18px;background:linear-gradient(160deg,#141a33,#0b0d1c);border:1px solid rgba(190,170,255,.25);box-shadow:0 0 60px rgba(110,120,255,.25);animation:pop .45s ease}
 @keyframes pop{from{transform:translateY(20px) scale(.96);opacity:0}}
-.letterImage{display:block;width:100%;height:auto;border-radius:10px}
+.letterText{position:relative;width:100%;aspect-ratio:1103/1426;container-type:inline-size;background:#292a29;border-radius:10px;overflow:hidden}
+.letterLine{position:absolute;display:block;white-space:pre;font-family:Arial,"Microsoft YaHei","PingFang SC",sans-serif;font-weight:400;line-height:1.35;letter-spacing:0}
 .close{position:sticky;top:0;z-index:1;display:block;margin:0 0 6px auto;width:40px;height:40px;border:0;border-radius:50%;background:#202746;color:#f0ebff;font-size:24px;cursor:pointer}
 .nogl{position:fixed;left:16px;right:16px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:3;text-align:center;font-size:12px;color:#8d8d94;display:none}
 @media (min-width:900px) and (min-aspect-ratio:1/1){
@@ -479,7 +487,22 @@ go.addEventListener("click",function(e){ e.stopPropagation(); exit(); });
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="给奶油姐姐的一封信">
   <div class="paper">
     <button type="button" class="close" id="closeBtn" aria-label="关闭信件">×</button>
-    <img loading="lazy" decoding="async" class="letterImage" alt="To 宇宙无敌最最最好的奶油姐姐：地球online提醒您，您已升级至 Lv.24。生日快乐！0202許願の日。幸福请降临在姐姐的手中。希望姐姐可以一直做自己。" src="assets/letter-16f6a4097f.png">
+    <div class="letterText" aria-label="给奶油姐姐的生日信"><span class="letterLine" style="left:3.173%;top:2.454%;font-size:5.440cqw;color:#dddddd">To 宇宙无敌最最最好的奶油姐</span>
+<span class="letterLine" style="left:3.173%;top:8.135%;font-size:5.440cqw;color:#dddddd">姐：</span>
+<span class="letterLine" style="left:3.173%;top:13.815%;font-size:5.440cqw;color:#dddddd">☆地球online提醒您 您已升级至</span>
+<span class="letterLine" style="left:3.173%;top:19.495%;font-size:5.440cqw;color:#dddddd">Lv.24★*</span>
+<span class="letterLine" style="left:32.910%;top:24.544%;font-size:3.626cqw;color:#dddddd">·  ╲  ↑  ╱</span>
+<span class="letterLine" style="left:33.998%;top:27.840%;font-size:3.626cqw;color:#dddddd">－       －</span>
+<span class="letterLine" style="left:26.292%;top:31.417%;font-size:5.440cqw;color:#dddddd">·      🕯️ ≈ 🍰 ·</span>
+<span class="letterLine" style="left:27.743%;top:38.569%;font-size:5.440cqw;color:#dddddd">╭♡≋★≋♡╮</span>
+<span class="letterLine" style="left:30.372%;top:44.741%;font-size:5.440cqw;color:#969696">~~~~~~~</span>
+<span class="letterLine" style="left:22.121%;top:50.000%;font-size:5.440cqw;color:#dddddd">╰⋛·⋚〜⋛·⋚╯</span>
+<span class="letterLine" style="left:22.121%;top:56.101%;font-size:5.440cqw;color:#dddddd">🎂生日快乐🎂</span>
+<span class="letterLine" style="left:3.173%;top:62.202%;font-size:5.440cqw;color:#dddddd">···☆「0202许愿の日 = w =!!!」</span>
+<span class="letterLine" style="left:3.173%;top:68.022%;font-size:5.440cqw;color:#dddddd">★···</span>
+<span class="letterLine" style="left:3.173%;top:73.703%;font-size:5.440cqw;color:#dddddd">*°☆★ 幸福请降临在姐姐的手中</span>
+<span class="letterLine" style="left:3.173%;top:79.453%;font-size:5.440cqw;color:#dddddd">* '.☆°··· 希望姐姐可以一直做自</span>
+<span class="letterLine" style="left:3.173%;top:85.133%;font-size:5.440cqw;color:#dddddd">己·◡····</span></div>
   </div>
 </div>
 <script src="assets/three.min.js"></script>
@@ -585,6 +608,12 @@ function SongPlayer(o){
     if (fade == null) fade = 2; if (cur && cur.id !== id) duckLv = 1; want = id; var t = tr(id);
     for (var k in T) if (k !== id && T[k].mode) stopTrack(T[k], Math.max(fade, .4)); // a real cross fade between songs
     cur = t;
+    if (t.src){
+      if (ctx && ctx.state === "running" && !t.mediaSource){
+        try{ t.mediaSource=ctx.createMediaElementSource(elGet(t)); t.mediaSource.connect(out); }catch(e){}
+      }
+      P.autoplay(id, fade); return;
+    }
     if (!useBuf()){ P.autoplay(id, fade); return; }
     if (t.mode === "buf"){ ramp(t.gain, VOL*duckLv, fade); notify(); return; }
     var off = (t.mode === "el" && t.el && !t.el.paused) ? t.el.currentTime : 0;
@@ -598,21 +627,14 @@ function SongPlayer(o){
           if (want === id && pd){ var o2 = (t.mode === "el" && t.el && !t.el.paused) ? t.el.currentTime : 0; startBuf(t, t.mode === "el" ? .35 : pd.fade, o2); } }, fail);
         if (pr && pr.catch) pr.catch(function(){});
       }
-      if (t.src){
-        P.autoplay(id, fade);
-        fetch(t.src).then(function(response){
-          if (!response.ok) throw new Error("Audio request failed");
-          return response.arrayBuffer();
-        }).then(decode, fail);
-      } else {
-        decode(b64buf(t.b64));
-      }
+      decode(b64buf(t.b64));
     }catch(e){ fail(); }
   };
   // plain element playback for moments without a gesture (page load, WeChat bridge); fails quietly if blocked
   P.autoplay = function(id, fade){
     want = id; var t = tr(id); cur = t; if (t.mode === "buf") return;
     var a = elGet(t); if (t.mode === "el" && !a.paused) return;
+    if (a.error) a.load();
     t.mode = "el"; try{ a.volume = 0; }catch(e){}
     var ok = function(){ if (t.mode === "el") elVol(t, VOL*duckLv, (fade || 2)*1000); notify(); };
     try{ var p = a.play(); if (p && p.then) p.then(ok, function(){ if (t.mode === "el" && a.paused) t.mode = null; notify(); }); else ok(); }catch(e){ t.mode = null; }
@@ -676,7 +698,7 @@ window.addEventListener("pageshow", function(e){ var ov = document.getElementByI
 
 /* ---------- background song (the user's own clip) + music box Happy Birthday for the blow-out moment ---------- */
 // track list: add more songs here later, e.g. {id:"song2", title:"...", b64:"..."}
-var TRACKS = [{id:"song1",title:"生日背景音乐",mime:"audio/mp4",src:"assets/birthday.m4a"}, {id:"song3",title:"生日背景音乐",mime:"audio/mp4",src:"assets/birthday.m4a"}];
+var TRACKS = [{id:"song1",title:"生日背景音乐",mime:"audio/mp4",src:"assets/birthday-stream.m4a"}, {id:"song3",title:"生日背景音乐",mime:"audio/mp4",src:"assets/birthday-stream.m4a"}];
 var trackIdx = 0, songGen = 0, switchTimer = null, SONG_VOL = .85, XF = 1.4;
 var AC = window.AudioContext || window.webkitAudioContext, actx = null, master = null, musicOn = false, loopTimer = null, voices = [];
 var songGain = null, songBufs = {}, songSrcs = [], songTimer = null, songPlaying = false, songDecoding = false, duckTimer = null, audioEl = null, useEl = false, elFade = null;
