@@ -1274,8 +1274,9 @@ function burst(){
 }
 
 /* --- effects toggles --- */
-var fx = {galaxy:false, snow:false, meteor:false, halo:false}, fxLevel = {galaxy:0, snow:0, meteor:0, halo:0};
+var fx = {galaxy:true, snow:true, meteor:true, halo:true}, fxLevel = {galaxy:0, snow:0, meteor:0, halo:0};
 Array.prototype.forEach.call(document.querySelectorAll(".bar button"), function(b){
+  b.classList.toggle("on", fx[b.getAttribute("data-fx")]);
   b.addEventListener("click", function(e){ e.stopPropagation(); var k = b.getAttribute("data-fx"); fx[k] = !fx[k]; b.classList.toggle("on", fx[k]); });
 });
 
