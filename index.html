@@ -13,18 +13,14 @@
   "countdown_done": "生日快乐，愿你每一天都被温柔以待",
   "page_title": "奶油姐姐，生日快乐！",
   "headline": "奶油姐姐，生日快乐！",
-  "panel_sub": "希望你天天开心，永远幸福",
-  "intro_sub": "希望你天天开心，永远幸福",
+  "panel_sub": "",
+  "intro_sub": "",
   "cal_zh": "生日快乐",
   "cal_en": "Happy Birthday",
   "intro_cards": [
     [
       "生日快乐",
       ""
-    ],
-    [
-      "希望你天天开心",
-      "永远幸福"
     ],
     [
       "今天也要开心呀",
@@ -89,7 +85,7 @@
   ],
   "letter_btn": "给奶油姐姐的一封信",
   "enter_label": "",
-  "wish_msg": "愿望收到啦！希望你天天开心，永远幸福",
+  "wish_msg": "愿望收到啦！",
   "signature": "",
   "nav_age": "",
   "songs": {
@@ -291,7 +287,7 @@ body:not(:has(#intro)) #birthdayLoading{color:#e9e6f5}
     <div class="stage" id="iStage"></div>
     <canvas class="fill" id="iFill"></canvas>
     <div class="glow" id="iGlow"></div>
-    <div class="center" id="iCenter"><b>奶油姐姐，生日快乐！<i>✦</i></b><small>希望你天天开心，永远幸福</small></div>
+    <div class="center" id="iCenter"><b>奶油姐姐，生日快乐！<i>✦</i></b><small style="display:none"></small></div>
   </div>
   <button class="tap" id="iTap">轻触开启惊喜 <span class="h">✦</span><small>TAP TO OPEN</small></button>
   <button class="go" id="iGo">🎂 进入星河漫游 →</button>
@@ -305,7 +301,7 @@ function fireReady(){ if(I.ready)return; I.ready=true; var c=I.cbs; I.cbs=[]; c.
 if(/[?&]nointro/.test(location.search)||location.hash==="#cake"){ el.parentNode.removeChild(el); I.active=false; I.ready=true; return; }
 window.__introHold=true;
 var COLS=[["#dbecfa","#c9e1f7"],["#f7dfeb","#f2cfe0"],["#f6f1d4","#f0e6b8"],["#e9e1f9","#dccff5"],["#d9f2e9","#c5e9dc"],["#f9e5de","#f4d6cb"]];
-var TEXTS=[["生日快乐", ""], ["希望你天天开心", "永远幸福"], ["今天也要开心呀", ""], ["所有的期待都如愿", ""], ["愿你每天都有好心情", ""], ["愿你被世界温柔以待", ""], ["今天是属于你的日子", "生日快乐 天天快乐"], ["新的一岁快乐", ""], ["岁岁平安", "年年有今朝"], ["愿你一直闪闪发光", ""], ["今天你最大", "心想事成"], ["好运常在", ""]];
+var TEXTS=[["生日快乐", ""], ["今天也要开心呀", ""], ["所有的期待都如愿", ""], ["愿你每天都有好心情", ""], ["愿你被世界温柔以待", ""], ["今天是属于你的日子", "生日快乐 天天快乐"], ["新的一岁快乐", ""], ["岁岁平安", "年年有今朝"], ["愿你一直闪闪发光", ""], ["今天你最大", "心想事成"], ["好运常在", ""]];
 var stage=document.getElementById("iStage"),scene=document.getElementById("iScene"),cal=document.getElementById("iCal"),center=document.getElementById("iCenter"),go=document.getElementById("iGo");
 var N=0,cards=[],L={},T0=0,PATH=[];
 // classic heart curve, t=0 at the top cusp, going round the left lobe to the bottom tip and up the right lobe
@@ -462,7 +458,7 @@ go.addEventListener("click",function(e){ e.stopPropagation(); exit(); });
 <div class="panel" id="panel">
   <div class="eyebrow">A little universe, just for you</div>
   <h1>天天开心<br>睡个好觉</h1>
-  <div class="sub">希望你天天开心，永远幸福</div>
+  
   <div class="nameRow"><div class="name">奶油姐姐，生日快乐！</div></div>
   <div class="dates" style="display:none"></div>
   <div class="cd" id="cd"></div>
@@ -471,7 +467,7 @@ go.addEventListener("click",function(e){ e.stopPropagation(); exit(); });
 <div class="musicBtn off" id="musicBtn" title="音乐"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 18.5a3 3 0 1 1-2-2.83V5l12-2v12.5a3 3 0 1 1-2-2.83V7.4l-8 1.33z"/></svg></div>
 <div class="nogl" id="nogl">你的浏览器暂时无法显示 3D 星河，先送你一个简单版的蛋糕</div>
 <div class="bottom">
-  <div class="wishMsg" id="wishMsg">愿望收到啦！希望你天天开心，永远幸福<a class="wishGo" id="wishGo" hidden style="display:none"></a><small>再点一下蜡烛，可以重新点亮</small></div>
+  <div class="wishMsg" id="wishMsg">愿望收到啦！<a class="wishGo" id="wishGo" hidden style="display:none"></a><small>再点一下蜡烛，可以重新点亮</small></div>
   <div class="hint" id="hint">许个愿，吹灭蜡烛</div>
   <div class="bar" id="bar">
     <button data-fx="galaxy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-25 12 12)"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>星河</button>
