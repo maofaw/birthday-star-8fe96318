@@ -290,39 +290,40 @@ var COLS=[["#dbecfa","#c9e1f7"],["#f7dfeb","#f2cfe0"],["#f6f1d4","#f0e6b8"],["#e
 var TEXTS=[["生日快乐", ""], ["希望你天天开心", "永远幸福"], ["今天也要开心呀", ""], ["所有的期待都如愿", ""], ["愿你每天都有好心情", ""], ["愿你被世界温柔以待", ""], ["今天是属于你的日子", "生日快乐 天天快乐"], ["新的一岁快乐", ""], ["岁岁平安", "年年有今朝"], ["愿你一直闪闪发光", ""], ["今天你最大", "心想事成"], ["好运常在", ""]];
 var stage=document.getElementById("iStage"),scene=document.getElementById("iScene"),cal=document.getElementById("iCal"),center=document.getElementById("iCenter"),go=document.getElementById("iGo");
 var N=0,cards=[],L={},T0=0,PATH=[];
-
-var vertices = Array.from({length:10}, function(_, index){
-  var angle = -Math.PI/2 + index * Math.PI/5;
-  var radius = index % 2 ? 6.9 : 16;
-  return {x:Math.cos(angle)*radius, y:Math.sin(angle)*radius + 1.53};
-});
-var starWidth = 2 * vertices[2].x;
-function buildPath(){
-  var points = [];
-  vertices.forEach(function(from, index){
-    var to = vertices[(index+1)%vertices.length];
-    var angle = Math.atan2(to.y-from.y, to.x-from.x);
-    for(var step=0;step<6;step++){
-      var portion = step/6;
-      points.push({x:from.x+(to.x-from.x)*portion, y:from.y+(to.y-from.y)*portion, ang:angle});
-    }
-  });
-  return points;
+// classic heart curve, t=0 at the top cusp, going round the left lobe to the bottom tip and up the right lobe
+function starPath(t){
+  var step=t/(Math.PI/5), index=Math.floor(step), portion=step-index;
+  function vertex(k){
+    var angle=-Math.PI/2+k*Math.PI/5, radius=k%2 ? 7.3 : 16.823;
+    return {x:Math.cos(angle)*radius,y:Math.sin(angle)*radius+2.5};
+  }
+  var from=vertex(index),to=vertex(index+1);
+  return {x:from.x+(to.x-from.x)*portion,y:from.y+(to.y-from.y)*portion};
+}
+var PERIM=(function(){var M=2000,t=0,a=starPath(0);for(var i=1;i<=M;i++){var b=starPath(2*Math.PI*i/M);t+=Math.hypot(b.x-a.x,b.y-a.y);a=b;}return t;})();
+function buildPath(n){
+  var M=3000,P=[],acc=[0],prev=starPath(0);P.push(prev);
+  for(var i=1;i<=M;i++){ var p=starPath(2*Math.PI*i/M); acc.push(acc[i-1]+Math.hypot(p.x-prev.x,p.y-prev.y)); P.push(p); prev=p; }
+  var total=acc[M],out=[],j=0;
+  for(var k=0;k<n;k++){ var tg=total*(.012+.976*k/(n-1)); while(acc[j]<tg)j++;
+    var a=P[Math.max(0,j-6)],b=P[Math.min(M,j+6)]; out.push({x:P[j].x,y:P[j].y,ang:Math.atan2(b.y-a.y,b.x-a.x)}); }
+  return out;
 }
 function layout(){
   var W=window.innerWidth,H=window.innerHeight,desk=W>=900&&W/H>=1;
-  var starW=desk?Math.min(W*.58,H*.82):Math.min(W*.91,H*.69);
-  var cw=Math.round(starW*.14), ch=Math.round(cw*.62);
-  var s=(starW-cw)/starWidth;
-  var cy=H*(desk?.5:.47);
+  // heart outer width about 88% of a phone screen (about 30% of a wide screen), card width about a quarter of it
+  var heartW=desk?Math.min(W*.6,H*.98):Math.min(W*.94,H*.62);
+  var cw=Math.round(heartW*.245), ch=Math.round(cw*.62);
+  var s=(heartW-cw)/32;
+  var cy=H*(desk?.5:.47)-2.5*s;
   L={W:W,H:H,cw:cw,ch:ch,s:s,cy:cy,cx:W/2};
   stage.style.setProperty("--cw",cw+"px"); stage.style.setProperty("--cr",Math.max(4,Math.round(cw*.06))+"px");
   var zh=cal.querySelector(".zh"),en=cal.querySelector(".en"),st=cal.querySelector(".stroke");
-  var zfs=Math.round(Math.min(starW*.19,W*.16)); zh.style.fontSize=zfs+"px"; en.style.fontSize=Math.round(zfs*.5)+"px"; en.style.top=Math.round(zfs*.6)+"px";
+  var zfs=Math.round(Math.min(heartW*.33,W*.205)); zh.style.fontSize=zfs+"px"; en.style.fontSize=Math.round(zfs*.5)+"px"; en.style.top=Math.round(zfs*.6)+"px";
   st.style.top=Math.round(zfs*.8)+"px"; st.style.height=Math.round(zfs*1.1)+"px"; st.style.marginLeft=Math.round(-zfs*.75)+"px"; st.style.width=Math.max(2,Math.round(zfs*.035))+"px";
-  cal.style.top=(cy-zfs*.47)+"px";
-  center.style.width=Math.round(starW*.62)+"px"; center.style.height=Math.round(starW*.27)+"px"; center.style.top=(cy+s*1.2)+"px";
-  center.querySelector("b").style.fontSize=Math.round(starW*.068)+"px"; center.querySelector("small").style.fontSize=Math.max(10,Math.round(starW*.032))+"px";
+  cal.style.top=(H*(desk?.49:.46)-zfs*.6)+"px";
+  center.style.width=Math.round(heartW*.62)+"px"; center.style.height=Math.round(heartW*.27)+"px"; center.style.top=(cy+s*1.2)+"px";
+  center.querySelector("b").style.fontSize=Math.round(heartW*.068)+"px"; center.querySelector("small").style.fontSize=Math.max(10,Math.round(heartW*.032))+"px";
   el.style.setProperty("--zs",desk?"1.18":"1.0");
   cards.forEach(place);
 }
@@ -345,19 +346,18 @@ function makeCard(k){
   var c={el:d,k:k,jit:(Math.random()-.5)*1.6,shown:false,t:0}; d.style.zIndex=String(10+k); return c;
 }
 function build(){
-  PATH=buildPath();
-  N=PATH.length;
+  var desk=window.innerWidth>=900&&window.innerWidth/window.innerHeight>=1;
+  var W=window.innerWidth,H=window.innerHeight,hw=desk?Math.min(W*.6,H*.98):Math.min(W*.94,H*.62),cw=hw*.245,sc=(hw-cw)/32;
+  N=Math.round(Math.min(220,Math.max(90,PERIM*sc/(cw*.088)))); PATH=buildPath(N);
   for(var k=0;k<N;k++){ var c=makeCard(k); c.t=DEAL0+(DEAL1-DEAL0)*Math.pow(k/(N-1),.97); cards.push(c); }
 }
-var DEAL0=.15,DEAL1=3.25,PRE=3,UNR0=4.95,UNR1=5.55;
-var FILL0=5.05,FILL1=6.15;
-var centerT=5.85,zoomT=5.70,goT=7.65,shown=false,unr=0;
-/* ---------- after the star: little cards pop up everywhere until the screen is full (canvas, pooled sprites) ---------- */
+var DEAL0=.7,DEAL1=9.0,PRE=7,UNR0=9.55,UNR1=9.95,FILL0=9.8,FILL1=13.0,centerT=13.25,zoomT=13.1,goT=14.0,shown=false,unr=0;
+/* ---------- after the heart: little cards pop up everywhere until the screen is full (canvas, pooled sprites) ---------- */
 var FCOL=["#4fd3ee","#ff86c8","#d9ec4a","#ffb04a","#b892f2","#a3dbf8","#79e2b9","#ff9e9e","#f9d65c"];
 var FTXT=["顺顺利利", "保持好心情", "好好照顾自己", "天冷了多穿衣服", "早点休息", "万事胜意", "平安喜乐", "天天开心", "生日快乐", "永远幸福", "所愿皆成真", "岁岁平安", "心想事成", "好运常在", "闪闪发光", "新的一岁快乐", "前程似锦", "一直做自己"];
 var fc=document.getElementById("iFill"),fx=fc.getContext("2d"),fBase=document.createElement("canvas"),fbx=fBase.getContext("2d"),FC=[],fSpr={},fDone=0,fStatic=0,fDpr=1,fW=0,fH=0,exitT=0;
 function fSprite(ci,ti){ var key=ci+"_"+ti; if(fSpr[key])return fSpr[key];
-  // drawn exactly like the star cards (#intro .c): pastel gradient, white rim, ✦ and ×, bold wish with a soft second line
+  // drawn exactly like the heart cards (#intro .c): pastel gradient, white rim, ✦ and ×, bold wish with a soft second line
   var w=F.cw,h=F.ch,pd=Math.ceil(w*.08),d=fDpr,c=document.createElement("canvas"); c.width=Math.ceil((w+pd*2)*d); c.height=Math.ceil((h+pd*2)*d);
   var x=c.getContext("2d"); x.scale(d,d); x.translate(pd,pd); var r=Math.max(4,Math.round(w*.06)),col=COLS[ci],tx=TEXTS[ti];
   function rr(x0,y0,ww,hh,ra){ x.beginPath(); x.moveTo(x0+ra,y0); x.arcTo(x0+ww,y0,x0+ww,y0+hh,ra); x.arcTo(x0+ww,y0+hh,x0,y0+hh,ra); x.arcTo(x0,y0+hh,x0,y0,ra); x.arcTo(x0,y0,x0+ww,y0,ra); x.closePath(); }
@@ -383,7 +383,7 @@ function fillLayout(){
   for(var j=0;j<ny;j++)for(var i=0;i<nx;i++)P.push([i*gx-F.cw*.3+(Math.random()-.3)*gx*.8,j*gy-F.ch*.3+(Math.random()-.3)*gy*.8]);
   for(var e=0;e<Math.round(P.length*.35);e++)P.push([Math.random()*W-F.cw*.5,Math.random()*H-F.ch*.5]);
   for(i=P.length-1;i>0;i--){ var k=(Math.random()*(i+1))|0,tmp=P[i];P[i]=P[k];P[k]=tmp; }
-  var n=Math.min(P.length,460); FC=[];
+  var n=Math.min(P.length,700); FC=[];
   for(i=0;i<n;i++){ var u=i/(n-1); FC.push({x:P[i][0],y:P[i][1],ci:(Math.random()*COLS.length)|0,ti:(Math.random()*TEXTS.length)|0,t:FILL0+(FILL1-FILL0)*Math.pow(u,.62),r:Math.random()}); }
   fDone=0; fStatic=0; fbx.setTransform(1,0,0,1,0,0); fbx.clearRect(0,0,fBase.width,fBase.height); window.__intro.fillN=n;
 }
@@ -403,7 +403,7 @@ function fillFrame(t,now){
   for(var j=fDone;j<FC.length&&FC[j].t<=t;j++){ var k=(t-FC[j].t)/.2; fDraw(fx,FC[j],pop(k),Math.min(1,k*3)); }
 }
 build(); layout(); fillLayout(); window.__intro.n=N; window.addEventListener("resize",function(){ layout(); fillLayout(); });
-// the starting pile: the first few cards already sit at the top of the star
+// the starting pile: the first few cards already sit at the top of the heart
 function show(c,anim){ if(c.shown)return; c.shown=true; place(c); if(anim)c.el.classList.add("in"); stage.appendChild(c.el); }
 for(var k=0;k<PRE;k++)show(cards[k],false);
 var started=false,next=PRE;
@@ -422,7 +422,7 @@ function frame(now){
   if(I.active||exitT&&now-exitT<1400)requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-function begin(){ if(started)return; started=true; T0=0; el.classList.add("started"); window.__startBirthdayAudio(); try{ if(window.__introAudio)window.__introAudio.start(); }catch(e){} }
+function begin(){ if(started)return; started=true; T0=0; el.classList.add("started"); if(window.__startBirthdayAudio)window.__startBirthdayAudio(); try{ if(window.__introAudio)window.__introAudio.start(); }catch(e){} }
 I.begin=begin;
 document.getElementById("iTap").addEventListener("click",function(e){ e.stopPropagation(); begin(); });
 el.addEventListener("click",function(){ if(!started)begin(); });
