@@ -102,6 +102,22 @@
   }
 }</script>
 <script>
+window.__birthdayAudio = null;
+window.__birthdayAudioStarted = false;
+window.__startBirthdayAudio = function(){
+  var audio = window.__birthdayAudio;
+  if (!audio){
+    audio = window.__birthdayAudio = new Audio("assets/birthday.m4a");
+    audio.loop = true;
+    audio.preload = "auto";
+    audio.volume = .85;
+    audio.setAttribute("playsinline", "");
+    audio.setAttribute("webkit-playsinline", "");
+  }
+  window.__birthdayAudioStarted = true;
+  var playing = audio.play();
+  if (playing && playing.catch) playing.catch(function(){});
+};
 window.__cakeSideImage=new Image();
 window.__cakeSideReady=new Promise(function(resolve,reject){window.__cakeSideImage.onload=resolve;window.__cakeSideImage.onerror=reject;});
 window.__cakeSideImage.src="assets/cake.webp";
@@ -406,7 +422,7 @@ function frame(now){
   if(I.active||exitT&&now-exitT<1400)requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-function begin(){ if(started)return; started=true; T0=0; el.classList.add("started"); try{ if(window.__introAudio)window.__introAudio.start(); }catch(e){} }
+function begin(){ if(started)return; started=true; T0=0; el.classList.add("started"); window.__startBirthdayAudio(); try{ if(window.__introAudio)window.__introAudio.start(); }catch(e){} }
 I.begin=begin;
 document.getElementById("iTap").addEventListener("click",function(e){ e.stopPropagation(); begin(); });
 el.addEventListener("click",function(){ if(!started)begin(); });
@@ -519,8 +535,8 @@ function SongPlayer(o){
     t.timer = setTimeout(function(){ if (t.gen === gen && t.mode === "buf") sched(t, next, gen, 0, false); }, Math.max(0, (next - ctx.currentTime - 2)*1000));
   }
   function elGet(t){
-    if (!t.el){ var a = t.el = document.createElement("audio"); a.preload = "auto"; a.loop = true; a.setAttribute("playsinline", ""); a.setAttribute("webkit-playsinline", "");
-      a.setAttribute("data-track", t.id); a.src = t.src || ("data:" + mime + ";base64," + t.b64); a.style.display = "none";
+    if (!t.el){ var a = t.el = (t.src && window.__birthdayAudio) || document.createElement("audio"); a.preload = "auto"; a.loop = true; a.setAttribute("playsinline", ""); a.setAttribute("webkit-playsinline", "");
+      a.setAttribute("data-track", t.id); var source = t.src || ("data:" + mime + ";base64," + t.b64); if (a.src !== new URL(source, document.baseURI).href) a.src = source; a.style.display = "none";
       ["play","playing","pause","ended"].forEach(function(ev){ a.addEventListener(ev, notify); }); document.body.appendChild(a); }
     return t.el;
   }
@@ -682,7 +698,7 @@ function playRound(t){
   return t - t0 + 1.2;
 }
 var SP = SongPlayer({ctx:function(){ return initAudio(); }, tracks:{}, urls:{song1:TRACKS[0].src, song3:TRACKS[1].src}, mime:"audio/mp4", vol:SONG_VOL, xf:XF, onState:musicUI});
-var userOff = false, introStarted = false;
+var userOff = false, introStarted = !!window.__birthdayAudioStarted;
 function o2ready(){ return false; }
 function musicUI(on){ musicOn = on; var b = $("musicBtn"); if (b) b.className = "musicBtn " + (on ? "on" : "off"); if (typeof bloomPost === "function") bloomPost(); }
 function pageTrack(){ if (typeof bloomOpen !== "undefined" && bloomOpen) return SP.want() === "song2" || o2ready() ? "song2" : "song1"; return (window.__intro && window.__intro.active) ? (introStarted ? "song1" : null) : "song1"; }
@@ -702,6 +718,7 @@ function setMusic(on){
 }
 function playTrack(id, fade){ trackIdx = trackById(id); if (userOff) return; SP.play(id, fade == null ? 2 : fade); }
 window.__introAudio = {start:function(){ introStarted = true; SP.unlock(); playTrack("song1", 1.2); }, toCake:function(){ playTrack("song1", 2); }};
+if (window.__birthdayAudioStarted) window.__introAudio.start();
 // first real gesture anywhere starts the song for the current view; retried until audio actually runs
 SongPlayer.gestures(function(e){
   SP.unlock();
