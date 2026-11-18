@@ -113,7 +113,7 @@ window.__birthdayAudioStarted = false;
 window.__prepareBirthdayAudio = function(){
   var audio = window.__birthdayAudio;
   if (!audio){
-    audio = window.__birthdayAudio = new Audio("assets/birthday-stream.m4a");
+    audio = window.__birthdayAudio = new Audio("assets/birthday-fast.mp3");
     audio.loop = true;
     audio.preload = "auto";
     ["loadstart","waiting","canplay","playing","error"].forEach(function(event){audio.addEventListener(event,window.__updateBirthdayLoading);});
@@ -639,7 +639,7 @@ function SongPlayer(o){
     want = id; var t = tr(id); cur = t; if (t.mode === "buf") return;
     var a = elGet(t); if (t.mode === "el" && !a.paused) return;
     if (a.error) a.load();
-    t.mode = "el"; try{ a.volume = 0; }catch(e){}
+    t.mode = "el"; try{ a.volume = VOL*duckLv; }catch(e){}
     var ok = function(){ if (t.mode === "el") elVol(t, VOL*duckLv, (fade || 2)*1000); notify(); };
     try{ var p = a.play(); if (p && p.then) p.then(ok, function(){ if (t.mode === "el" && a.paused) t.mode = null; notify(); }); else ok(); }catch(e){ t.mode = null; }
   };
@@ -702,7 +702,7 @@ window.addEventListener("pageshow", function(e){ var ov = document.getElementByI
 
 /* ---------- background song (the user's own clip) + music box Happy Birthday for the blow-out moment ---------- */
 // track list: add more songs here later, e.g. {id:"song2", title:"...", b64:"..."}
-var TRACKS = [{id:"song1",title:"生日背景音乐",mime:"audio/mp4",src:"assets/birthday-stream.m4a"}, {id:"song3",title:"生日背景音乐",mime:"audio/mp4",src:"assets/birthday-stream.m4a"}];
+var TRACKS = [{id:"song1",title:"生日背景音乐",mime:"audio/mpeg",src:"assets/birthday-fast.mp3"}, {id:"song3",title:"生日背景音乐",mime:"audio/mpeg",src:"assets/birthday-fast.mp3"}];
 var trackIdx = 0, songGen = 0, switchTimer = null, SONG_VOL = .85, XF = 1.4;
 var AC = window.AudioContext || window.webkitAudioContext, actx = null, master = null, musicOn = false, loopTimer = null, voices = [];
 var songGain = null, songBufs = {}, songSrcs = [], songTimer = null, songPlaying = false, songDecoding = false, duckTimer = null, audioEl = null, useEl = false, elFade = null;
@@ -745,7 +745,7 @@ function playRound(t){
   for (var i=0;i<SONG.length;i++){ bell(NF[SONG[i][0]], t); t += SONG[i][1]*beat; }
   return t - t0 + 1.2;
 }
-var SP = SongPlayer({ctx:function(){ return initAudio(); }, tracks:{}, urls:{song1:TRACKS[0].src, song3:TRACKS[1].src}, mime:"audio/mp4", vol:SONG_VOL, xf:XF, onState:musicUI});
+var SP = SongPlayer({ctx:function(){ return initAudio(); }, tracks:{}, urls:{song1:TRACKS[0].src, song3:TRACKS[1].src}, mime:"audio/mpeg", vol:SONG_VOL, xf:XF, onState:musicUI});
 var userOff = false, introStarted = !!window.__birthdayAudioStarted;
 function o2ready(){ return false; }
 function musicUI(on){ musicOn = on; var b = $("musicBtn"); if (b) b.className = "musicBtn " + (on ? "on" : "off"); if (typeof bloomPost === "function") bloomPost(); }
