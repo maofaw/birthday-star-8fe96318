@@ -110,6 +110,8 @@ window.__birthdayMusicFailed=false;
 window.__birthdayOpening=false;
 window.__birthdayUserMuted=false;
 window.__birthdayMusicRequest=null;
+window.__birthdayMusicProgress=0;
+window.__birthdayMusicSource=window.__birthdayAudio.canPlayType('audio/ogg; codecs="opus"') ? {url:"assets/birthday-small.ogg",mime:"audio/ogg",bytes:212683} : {url:"assets/birthday-fast.mp3",mime:"audio/mpeg",bytes:348160};
 window.__updateBirthdayLoading=function(){
   var button=document.getElementById("iTap"),status=document.getElementById("birthdayLoading");
   var preparing=!window.__birthdayMainReady;
@@ -117,22 +119,37 @@ window.__updateBirthdayLoading=function(){
   var ready=window.__birthdayMusicReady;
   if(button){
     button.disabled=preparing || (!ready && !failed) || window.__birthdayOpening;
-    var label=failed ? "音乐加载失败，点此重试" : !ready ? "音乐准备中…" : window.__birthdayOpening ? "正在开启…" : "轻触开启惊喜";
+    var label=failed ? "音乐加载失败，点此重试" : !ready ? "音乐准备中 "+window.__birthdayMusicProgress+"%" : window.__birthdayOpening ? "正在开启…" : "轻触开启惊喜";
     button.firstChild.textContent=label+" ";
     button.querySelector("small").textContent=ready ? "TAP TO OPEN" : failed ? "TAP TO RETRY" : "加载完成后即可开启";
   }
   if(status){
     status.hidden=!preparing && ready;
-    status.textContent=preparing ? "生日惊喜准备中…" : failed ? "音乐暂未加载成功，请点击重试" : "正在完整加载音乐，请稍等…";
+    status.textContent=preparing ? "生日惊喜准备中…" : failed ? "音乐暂未加载成功，请点击重试" : "正在完整加载音乐 "+window.__birthdayMusicProgress+"%，加载好再开启…";
   }
 };
 window.__loadBirthdayMusic=function(){
   if(window.__birthdayMusicRequest || window.__birthdayMusicReady) return window.__birthdayMusicRequest;
   window.__birthdayMusicFailed=false;
+  window.__birthdayMusicProgress=0;
   window.__updateBirthdayLoading();
-  window.__birthdayMusicRequest=fetch("assets/birthday-fast.mp3").then(function(response){
+  window.__birthdayMusicRequest=fetch(window.__birthdayMusicSource.url).then(function(response){
     if(!response.ok)throw new Error("Audio download failed");
-    return response.arrayBuffer();
+    if(!response.body || !response.body.getReader)return response.arrayBuffer();
+    var reader=response.body.getReader(),parts=[],received=0;
+    var total=Number(response.headers.get("Content-Length")) || window.__birthdayMusicSource.bytes;
+    function read(){return reader.read().then(function(result){
+      if(result.done){
+        var bytes=new Uint8Array(received),offset=0;
+        parts.forEach(function(part){bytes.set(part,offset);offset+=part.length;});
+        return bytes.buffer;
+      }
+      parts.push(result.value);received+=result.value.length;
+      window.__birthdayMusicProgress=Math.min(99,Math.floor(received/total*100));
+      window.__updateBirthdayLoading();
+      return read();
+    });}
+    return read();
   }).then(function(bytes){
     return new Promise(function(resolve,reject){
       var audio=window.__birthdayAudio;
@@ -140,10 +157,11 @@ window.__loadBirthdayMusic=function(){
       function loaded(){cleanup();resolve();}
       function failed(){cleanup();reject(new Error("Audio decoding failed"));}
       audio.addEventListener("canplay",loaded);audio.addEventListener("error",failed);
-      audio.src=URL.createObjectURL(new Blob([bytes],{type:"audio/mpeg"}));
+      audio.src=URL.createObjectURL(new Blob([bytes],{type:window.__birthdayMusicSource.mime}));
       audio.load();
     });
   }).then(function(){
+    window.__birthdayMusicProgress=100;
     window.__birthdayMusicReady=true;
     window.__updateBirthdayLoading();
   }).catch(function(){
@@ -281,6 +299,7 @@ body:not(:has(#intro)) #birthdayLoading{color:#e9e6f5}
 #intro .cal .stroke{position:absolute;left:50%;width:3px;border-radius:2px;background:linear-gradient(#e2224e,rgba(226,34,78,.75) 70%,rgba(226,34,78,0));transform:rotate(1.5deg)}
 #intro .cal{opacity:0;transition:opacity 1.2s ease}
 #intro.started .cal{opacity:1}
+#intro:not(.started) .stage{visibility:hidden}
 #intro .stage{position:absolute;left:0;top:0;width:0;height:0}
 #intro .c{position:absolute;left:0;top:0;border-radius:var(--cr);box-shadow:0 -1px 1.5px rgba(110,60,95,.2),0 1px 2px rgba(110,60,95,.2),0 4px 10px rgba(150,80,120,.12),inset 0 0 0 1px rgba(255,255,255,.9);will-change:transform;overflow:hidden;transform:var(--t)}
 #intro .c.in{animation:cIn .16s ease-out}
@@ -399,7 +418,7 @@ function build(){
   N=Math.round(Math.min(220,Math.max(90,PERIM*sc/(cw*.088)))); PATH=buildPath(N);
   for(var k=0;k<N;k++){ var c=makeCard(k); c.t=DEAL0+(DEAL1-DEAL0)*Math.pow(k/(N-1),.97); cards.push(c); }
 }
-var DEAL0=.7,DEAL1=9.0,PRE=7,UNR0=9.55,UNR1=9.95,FILL0=9.8,FILL1=13.0,centerT=13.25,zoomT=13.1,goT=14.0,shown=false,unr=0;
+var DEAL0=.7,DEAL1=9.0,PRE=0,UNR0=9.55,UNR1=9.95,FILL0=9.8,FILL1=13.0,centerT=13.25,zoomT=13.1,goT=14.0,shown=false,unr=0;
 /* ---------- after the heart: little cards pop up everywhere until the screen is full (canvas, pooled sprites) ---------- */
 var FCOL=["#4fd3ee","#ff86c8","#d9ec4a","#ffb04a","#b892f2","#a3dbf8","#79e2b9","#ff9e9e","#f9d65c"];
 var FTXT=["顺顺利利", "保持好心情", "好好照顾自己", "天冷了多穿衣服", "早点休息", "万事胜意", "平安喜乐", "天天开心", "生日快乐", "永远幸福", "所愿皆成真", "岁岁平安", "心想事成", "好运常在", "闪闪发光", "新的一岁快乐", "前程似锦", "一直做自己"];
@@ -451,13 +470,16 @@ function fillFrame(t,now){
   for(var j=fDone;j<FC.length&&FC[j].t<=t;j++){ var k=(t-FC[j].t)/.2; fDraw(fx,FC[j],pop(k),Math.min(1,k*3)); }
 }
 build(); layout(); fillLayout(); window.__intro.n=N; window.addEventListener("resize",function(){ layout(); fillLayout(); });
-// the starting pile: the first few cards already sit at the top of the heart
+// Start with an empty stage so the first card appears only after opening.
 function show(c,anim){ if(c.shown)return; c.shown=true; place(c); if(anim)c.el.classList.add("in"); stage.appendChild(c.el); }
 for(var k=0;k<PRE;k++)show(cards[k],false);
-var started=false,next=PRE;
+var started=false,next=PRE,lastFrameTime=0;
 function frame(now){
-  if(!started){ T0=0; requestAnimationFrame(frame); return; }
-  if(!T0)T0=now; var t=(now-T0)/1000+cards[PRE].t;
+  if(!started){ T0=0; lastFrameTime=0; requestAnimationFrame(frame); return; }
+  if(!T0)T0=now;
+  if(lastFrameTime && now-lastFrameTime>50)T0+=now-lastFrameTime-50;
+  lastFrameTime=now;
+  var t=(now-T0)/1000+cards[PRE].t;
   if(I.paused){ requestAnimationFrame(frame); return; }
   while(next<N&&cards[next].t<=t){ show(cards[next],t-cards[next].t<.3); next++; }
   if(t>=UNR0){ var ug=Math.min(N,Math.floor(N*Math.min(1,(t-UNR0)/(UNR1-UNR0)))); while(unr<ug){ cards[unr].el.classList.add("gone"); unr++; } }
